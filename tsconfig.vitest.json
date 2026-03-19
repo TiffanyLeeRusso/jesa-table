@@ -1,0 +1,14 @@
+{
+  "extends": "./tsconfig.app.json",
+
+  // Override to include only test files and clear exclusions.
+  // Application code imported in tests is automatically included via module resolution.
+  "include": ["src/**/__tests__/*", "src/**/*.spec.ts", "src/**/*.test.ts"],
+  "exclude": [],
+  "compilerOptions": {
+    "composite": false,
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.vitest.tsbuildinfo",
+    "lib": ["esnext", "dom"],
+    "types": ["vitest/globals", "@vue/test-utils"]
+  }
+}
