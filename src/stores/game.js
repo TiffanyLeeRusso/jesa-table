@@ -1,13 +1,14 @@
 import { defineStore } from 'pinia';
-import { foodItems } from '../data/foodItems';
+import { foodItems, tableSlots } from '../data/foodItems';
 import { getFeedback } from '../data/ancestorFeedback';
 
 export const useGameStore = defineStore('game', {
   state: () => ({
     // Items waiting to be placed
-    readyQueue: [], 
+    readyQueue: [],
     // Items currently on the table { 'slot-1-1': { id: 'apple', ... } }
-    tablePlacements: {}, 
+    tablePlacements: {},
+    tableSlotIds: Object.fromEntries(tableSlots.map(s => [s.id, true])),
     // Items that haven't appeared yet
     remainingPool: [...foodItems],
     tipsHistory: [],
@@ -41,7 +42,7 @@ export const useGameStore = defineStore('game', {
     startGame() {
       if (this.isGameActive) return;
       this.isGameActive = true;
-      
+
       // Spawn the first 3 plates immediately so the user isn't waiting
       for(let i = 0; i < 3; i++) this.spawnPlate();
 
@@ -66,15 +67,15 @@ export const useGameStore = defineStore('game', {
     },
 
     scheduleNextTip() {
-      const wait = Math.floor(Math.random() * 8000) + 7000; // Mom talks every 7-15s
+      const wait = Math.floor(Math.random() * 11000) + 7000; // Mom talks every 10-15s
       setTimeout(() => {
         // Pick a random tip from the items still in the pool or on the table
         const allItems = [...foodItems];
         const randomItem = allItems[Math.floor(Math.random() * allItems.length)];
-        
+
         // Use the description we added to foodItems.js earlier
         const tipText = randomItem.description || `Remember where the ${randomItem.name} goes!`;
-        
+
         this.addTip(tipText);
         this.scheduleNextTip();
       }, wait);
@@ -84,20 +85,44 @@ export const useGameStore = defineStore('game', {
       this.draggingItem = item;
     },
 
-    // This handles moving an item to a slot
+    // This handles moving an item to a slot (and re-homing anything current in that slot)
     placeItem(slotId, item) {
-      //  Remove item from wherever it was (Ready Queue or another Slot)
-      this.readyQueue = this.readyQueue.filter(i => i.id !== item.id);
-      
-      // Remove from any other slot it might have been in (for swapping)
-      for (const key in this.tablePlacements) {
-        if (this.tablePlacements[key]?.id === item.id) {
-          delete this.tablePlacements[key];
-        }
-      }
+        // Find where the dragged item is coming from
+        const fromSlot = Object.keys(this.tablePlacements)
+              .find(key => this.tablePlacements[key]?.id === item.id);
 
-      // Place it in the new slot
-      this.tablePlacements[slotId] = item;
+        // Find what's currently in the target slot (if anything)
+        const displaced = this.tablePlacements[slotId] ?? null;
+
+        // Remove dragged item from its source
+        this.readyQueue = this.readyQueue.filter(i => i.id !== item.id);
+        if (fromSlot) delete this.tablePlacements[fromSlot];
+
+        // Place dragged item in target slot
+        this.tablePlacements[slotId] = item;
+
+        // Rehome the displaced item
+        if (displaced) {
+            if (fromSlot) {
+                // Came from another slot — swap
+                this.tablePlacements[fromSlot] = displaced;
+            } else {
+                // Came from ready queue — send displaced back to queue if room
+                if (this.readyQueue.length < 4) {
+                    this.readyQueue.push(displaced);
+                } else {
+                    // Queue is full — find any empty slot on the table and park it there
+                    const emptySlot = Object.keys(this.tableSlotIds ?? {})
+                          .find(key => !this.tablePlacements[key]);
+                    if (emptySlot) {
+                        this.tablePlacements[emptySlot] = displaced;
+                    } else {
+                        // Last resort — bump it to queue anyway
+                        this.readyQueue.push(displaced);
+                    }
+                }
+            }
+        }
     },
 
     addTip(text) {

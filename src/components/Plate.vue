@@ -3,6 +3,10 @@
     class="plate-item" 
     :draggable="true"
     @dragstart="onDragStart"
+    @touchstart.prevent="$emit('touchstart', $event)"
+    @touchmove.prevent="$emit('touchmove', $event)"
+    @touchend="$emit('touchend', $event)"
+    @touchcancel="$emit('touchcancel', $event)"
     :aria-label="item.name"
   >
     <img :src="item.image" :alt="item.name" class="food-img" />
@@ -12,6 +16,8 @@
 
 <script setup>
 import { useGameStore } from '../stores/game';
+
+defineEmits(['dragstart', 'touchstart', 'touchmove', 'touchend', 'touchcancel']);
 
 const props = defineProps({ item: Object });
 const store = useGameStore();
@@ -25,8 +31,13 @@ function onDragStart(e) {
 
 <style scoped>
 .plate-item {
-  width: 100px;
-  height: 100px;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  max-width: 100px;
+  max-height: 100px;
+  /* remove the fixed 100px width/height */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -35,8 +46,8 @@ function onDragStart(e) {
   border-radius: 50%;
   box-shadow: 0 4px 6px rgba(0,0,0,0.1);
   padding: 5px;
+  box-sizing: border-box;
   user-select: none;
-  -webkit-user-drag: none;
   touch-action: none;
 }
 
