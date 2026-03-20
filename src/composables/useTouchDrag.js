@@ -89,6 +89,7 @@ export function useTouchDrag(store) {
     clone?.remove();
     clone = null;
     draggingItem.value = null;
+    store.setDraggingItem(null)
     clearSlotHighlights();
   }
 
