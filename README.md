@@ -1,6 +1,6 @@
 # 제삿상 차리기 — Jesa Table Setting Game
 
-A browser-based Korean cultural learning game where players practice arranging a traditional *jesa* (제사) ancestral offering table. Drag and drop food items from the ready queue onto their correct ritual positions, then make the offering and receive feedback from your ancestors.
+A browser-based Korean cultural learning game where players practice arranging a traditional *jesa* (제사) ancestral offering table. Drag and drop food items from the ready queue onto their correct ritual positions, then make the offering and receive feedback from your ancestors. See it here: https://tiffany.lee-russo.com/projects/JesaTable/
 
 ## Features
 
