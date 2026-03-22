@@ -31,13 +31,10 @@ function onDragStart(e) {
 
 <style scoped>
 .plate-item {
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  min-height: 0;
   max-width: 100px;
   max-height: 100px;
-  /* remove the fixed 100px width/height */
+  min-width: 60px;
+  min-height: 60px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -64,8 +61,19 @@ function onDragStart(e) {
 }
 
 .food-label {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: #333;
-  margin-top: 4px;
+  width: 100%;
+  border: 1px solid #999;
+  padding: 2px;
+  background: #fff;
+  border-radius: 6px;
+  text-align: center;
+}
+
+@media (min-width: 900px) {
+  .food-label {
+    width:65%;
+  }
 }
 </style>

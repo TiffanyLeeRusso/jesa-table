@@ -11,38 +11,45 @@
 
     <main class="gameplay-area">
       <section class="table-section" aria-label="Jesa Offering Table">
-        <div class="jesa-table" role="grid" aria-label="Food placement grid">
-          <div class="table-row" v-for="row in tableRows" :key="row.row">
-            <div 
-              v-for="slot in row.slots" 
-              :key="slot.id"
-              class="table-slot"
-              :class="{ 'drag-over': dragOverSlot === slot.id }"
-              :data-slot-id="slot.id"
-              @dragover.prevent="dragOverSlot = slot.id"
-              @dragleave="dragOverSlot = null"
-              @drop.prevent="onDrop(slot.id)"
-              >
-              <Plate
-                v-if="tablePlacements[slot.id]"
-                :item="tablePlacements[slot.id]"
-                @touchstart="onTouchStart($event, tablePlacements[slot.id])"
-                @touchmove="onTouchMove($event)"
-                @touchend="onTouchEnd($event)"
-                @touchcancel="onTouchCancel()"
-                />
+        <div class="table-with-screen">
+          <img :src="byeongpungUrl" class="byeongpung" alt="" aria-hidden="true"/>
+          <div class="table-scroll-wrap">
+            <div class="jesa-table" role="grid" aria-label="Food placement grid">
+              <div class="table-row" :class="{ 'drink-divider': row.isDrinkDivider }" v-for="row in tableRows" :key="row.row">
+                <div 
+                  v-for="slot in row.slots" 
+                  :key="slot.id"
+                  class="table-slot"
+                  :class="{ 'drag-over': dragOverSlot === slot.id }"
+                  :data-slot-id="slot.id"
+                  @dragover.prevent="dragOverSlot = slot.id"
+                  @dragleave="dragOverSlot = null"
+                  @drop.prevent="onDrop(slot.id)"
+                  >
+                  <Plate
+                    v-if="tablePlacements[slot.id]"
+                    :item="tablePlacements[slot.id]"
+                    @touchstart="onTouchStart($event, tablePlacements[slot.id])"
+                    @touchmove="onTouchMove($event)"
+                    @touchend="onTouchEnd($event)"
+                    @touchcancel="onTouchCancel()"
+                    />
+                </div>
+              </div>
             </div>
           </div>
         </div>
 
-        <button 
-          v-if="allPlatesPlaced" 
-          class="done-btn" 
-          @click="store.submitTable()"
-          aria-label="Finish and submit table"
-          >
-          차례 드리기 🙏
-        </button>
+        <div class="done">
+          <button 
+            v-if="allPlatesPlaced" 
+            class="done-btn" 
+            @click="store.submitTable()"
+            aria-label="Finish and submit table"
+            >
+            차례 드리기 🙏
+          </button>
+        </div>
       </section>
 
       <aside class="ready-area" aria-labelledby="ready-title">
@@ -98,6 +105,7 @@ import { tableSlots } from './data/foodItems';
 import { useTouchDrag } from './composables/useTouchDrag';
 import Plate from './components/Plate.vue';
 import AncestorOverlay from './components/AncestorOverlay.vue';
+import byeongpungUrl from './assets/images/byeongpung_screen.svg'
 
 const store = useGameStore();
 const { 
@@ -118,12 +126,13 @@ const dragOverSlot = ref(null);
 const tableRows = computed(() => {
   const rows = {};
   tableSlots.forEach(slot => {
-    const rowNum = slot.id.split('-')[1]; // '5', '4', etc.
-    if (!rows[rowNum]) rows[rowNum] = { row: rowNum, slots: [] };
+    const parts = slot.id.split('-');
+    const rowNum = parseInt(parts[1]);
+    if (!rows[rowNum]) rows[rowNum] = { row: rowNum, slots: [], isDrinkDivider: rowNum === 6 };
     rows[rowNum].slots.push(slot);
   });
-  // Return sorted highest row number first (row 5 = back = top)
-  return Object.values(rows).sort((a, b) => b.row - a.row);
+  // row 1 is back/top, etc.
+  return Object.values(rows).sort((a, b) => a.row - b.row);
 });
 
 function onDrop(slotId) {
@@ -146,6 +155,7 @@ onMounted(async () => {
 :root {
   --bg-color: #2c2c2c;
   --table-wood: #5d4037;
+  --dark-wood: #3e2723;
   --accent: #e67e22;
 }
 
@@ -215,38 +225,57 @@ body {
 
 /* Responsive Grid */
 .gameplay-area {
-  display: grid;
-  grid-template-columns: 1fr; /* Default to 1 column for mobile */
+  display: flex;
+  flex-direction: column;
   gap: 1rem;
   padding: 1rem;
   width: 100%;
-  max-width: 1100px;   /* table max 900 + sidebar 300 + gap */
-  margin: 0 auto;      /* center the whole thing */
+  max-width: 1100px;
+  margin: 0 auto 50px;
   box-sizing: border-box;
 }
 
 @media (min-width: 900px) {
   .gameplay-area {
+    display: grid;
     grid-template-columns: 1fr 200px;
   }
 }
 
-.table-section {
+.table-with-screen {
+  position: relative;
+  width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
+.byeongpung {
+  width: 100%;
+  display: block;
+  margin-bottom: -70px;   /* pull the table up to overlap the screen's feet */
+  position: relative;
+  z-index: 0;
+}
+
+.table-scroll-wrap {
+  position: relative;
+  z-index: 1;             /* table sits in front of the screen */
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
 .jesa-table {
   width: 100%;
-  max-width: 900px;
+  min-width: 560px;  /* 7 slots × 70px + 6 gaps × 8px = 538px, round up */
   background: var(--table-wood);
-  border: 8px solid #3e2723;
+  border: 8px solid var(--dark-wood);
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  gap: clamp(4px, 1vw, 12px);
-  padding: clamp(10px, 2vw, 24px);
+  gap: 8px;
+  padding: 12px;
   box-sizing: border-box;
 }
 
@@ -254,13 +283,34 @@ body {
   display: flex;
   flex-direction: row;
   justify-content: center;
-  gap: clamp(4px, 1vw, 12px);
+  gap: 8px;
+}
+
+.table-row.drink-divider {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  position: relative;
+  border-top: 8px solid var(--dark-wood);
+}
+
+.table-row.drink-divider::after {
+  content: '차례주 (Drink Offering)';
+  position: absolute;
+  top: -0.65rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--table-wood);
+  padding: 0 0.6rem;
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.45);
+  white-space: nowrap;
+  font-style: italic;
 }
 
 .table-slot {
-  width: clamp(48px, 9vw, 100px);
-  height: clamp(48px, 9vw, 100px);
-  flex-shrink: 0;
+  width: 70px;
+  height: 70px;
+  flex-shrink: 0;          /* never compress below 70px */
   border: 2px dashed rgba(255, 255, 255, 0.2);
   border-radius: 50%;
   display: flex;
@@ -268,6 +318,20 @@ body {
   justify-content: center;
   pointer-events: auto;
   transition: background 0.15s, border-color 0.15s, transform 0.15s;
+}
+
+@media (min-width: 600px) {
+  .table-slot {
+    width: 90px;
+    height: 90px;
+  }
+}
+
+@media (min-width: 900px) {
+  .table-slot {
+    width: 100px;
+    height: 100px;
+  }
 }
 
 /* Visual cue when hovering a draggable item over a slot */
@@ -294,19 +358,26 @@ body {
 
 .plate-queue {
   display: flex;
-  flex-direction: row; /* Horizontal on mobile */
+  flex-direction: row;
   gap: 10px;
-  overflow: auto;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   padding-bottom: 10px;
 }
 
 @media (min-width: 900px) {
   .plate-queue {
-    flex-direction: column; /* Vertical on desktop */
+    flex-direction: column;
+    overflow-x: visible;
+    overflow-y: auto;
   }
 }
 
 /* Buttons and Interactivity */
+.done {
+  text-align: center;
+}
+
 button {
   cursor: pointer;
   font-family: inherit;
