@@ -9,10 +9,9 @@
  * Row 7: (Drink offering): cup, drink
  */
 
-const IMAGE_DIR = "../assets/images/food";
 const getImageUrl = (name) => {
   try {
-    return new URL(`${IMAGE_DIR}/${name}.png`, import.meta.url).href;
+    return new URL(`../assets/images/food/${name}.png`, import.meta.url).href;
   } catch (error) {
     return `https://placehold.co/100x100/white/333?text=${name}`;
   }
